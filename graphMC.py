@@ -44,12 +44,13 @@ class proteinMC:
 		t = 0
 		e_site = self.start_res
 		trajectory = []
-		iHop       = []
+		iHop       = [0]
+		trajectory.append([iRun,e_site,iHop[0]])
 		while t<self.tmax:
 			tau      = self.probability(e_site)
 			P,neighbours = (list(t) for t in zip(*sorted(zip(list(tau.values()),list(tau.keys())))))
 			tau_site = self.tau_res(e_site)
-			t_hop = np.random.exponential(tau_site)
+			t_hop = 1.0/tau_site*np.random.exponential(1) #time which the electron spends on the residue
 			hop_vertex =neighbours[np.searchsorted(np.array(P),tau_site*np.random.rand())]
 			
 			hop_site   = hop_vertex.get_id()
@@ -60,7 +61,7 @@ class proteinMC:
 				iHop.append(t)	
 				trajectory.append([iRun,hop_site,iHop[-1]])
 				print("End of run"+ str(iRun)+", simulation maximum time reached")
-				#print(trajectory)
+				print(trajectory)
 				return np.array(trajectory)		
 					
 			iHop.append(t)
@@ -72,8 +73,10 @@ class proteinMC:
 				return np.array(trajectory)		
 					
 if __name__=="__main__":
-	params= {'TMAX':100000,"SOURCE RESIDUE":'35', "DRAIN RESIDUE":'293',"nRuns":100}
-	mc    = proteinMC(params,'rates.dat')
+#### Adjust the montecarlo parameters in params#######
+	params= {'TMAX':100000,"SOURCE RESIDUE":'36', "DRAIN RESIDUE":'293',"nRuns":1} 
+################
+	mc    = proteinMC(params,'rates.txt')
 	nRuns = params["nRuns"]  
 	trajectory = mc.runMC()
 	trajectory = np.concatenate(parallelMap(mc.runMC, cpu_count(), range(nRuns))) #Run in parallel and merge trajectories
