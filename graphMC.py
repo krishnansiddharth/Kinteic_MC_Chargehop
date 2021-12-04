@@ -1,6 +1,8 @@
 import graph
 from common import *
 import numpy as np
+import sys
+
 class proteinMC:
 
 #	Initialize a class given a protein as an input parameter
@@ -59,27 +61,31 @@ class proteinMC:
 				t_hop = self.tmax -  iHop[-1]
 				t = self.tmax
 				iHop.append(t)	
-				trajectory.append([iRun,hop_site,iHop[-1]])
+				#trajectory.append([iRun,hop_site,iHop[-1]])
 				print("End of run"+ str(iRun)+", simulation maximum time reached")
-				print(trajectory)
+				
 				return np.array(trajectory)		
 					
 			iHop.append(t)
 			trajectory.append([iRun,hop_site,iHop[-1]])	
 			e_site = hop_site	
+
 			if hop_site==self.end_res:
 				print("End of"+ str(iRun)+", electron reached end of protein at time "+ str(t) +"ns")
-				print(trajectory)
 				return np.array(trajectory)		
+
 					
 if __name__=="__main__":
+	Len = sys.argv[1]
+	last_res = 55+(int(Len)-1)*34
+	print(last_res)
 #### Adjust the montecarlo parameters in params#######
-	params= {'TMAX':100000,"SOURCE RESIDUE":'36', "DRAIN RESIDUE":'293',"nRuns":1} 
+	params= {'TMAX':100000,"SOURCE RESIDUE":'35', "DRAIN RESIDUE":str(last_res),"nRuns":4000} 
 ################
-	mc    = proteinMC(params,'rates.txt')
+	mc    = proteinMC(params,'generated_rates%s.dat'%Len)
 	nRuns = params["nRuns"]  
 	trajectory = mc.runMC()
 	trajectory = np.concatenate(parallelMap(mc.runMC, cpu_count(), range(nRuns))) #Run in parallel and merge trajectories
-	np.savetxt("trajectory.dat", trajectory, fmt = "%s,%s,%s", header="iElectron  Residue t[s]") #Save trajectories together 
+	np.savetxt("trajectory_ctpr%s.dat"%Len, trajectory, fmt = "%s,%s,%s", header="iElectron  Residue t[s]") #Save trajectories together 
 
 __name__="__main__"
